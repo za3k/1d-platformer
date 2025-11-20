@@ -158,7 +158,7 @@ function getFloor(floorNum) {
 function renderTick(elapsed) {
     // Render platforms
     const bottomFloor = Math.floor(state.bottom)
-    for (var floorOffset=0; floorOffset<10; ++floorOffset) {
+    for (var floorOffset=0; floorOffset<16; ++floorOffset) {
         const floorNum = bottomFloor + floorOffset
         const floor = getFloor(floorNum)
         for (var i=0; i<floor.length; i++) {
@@ -236,10 +236,12 @@ function main() {
     function updateJump() { jump(jumpMouse | jumpKeyboard); }
     $(document).on("mouseup",    () => { jumpMouse = false; updateJump(); })
     $(".button").on("mousedown", () => { jumpMouse = true; updateJump(); })
+    $(document).on("touchend",    () => { jumpMouse = false; updateJump(); })
+    $(".button").on("touchstart", (e) => { jumpMouse = true; updateJump(); e.preventDefault(); })
     $(document).on("keyup",      () => { jumpKeyboard = false; updateJump(); })
-    $(document).on("keydown",    (ev) => {
-        ev = ev.originalEvent
-        if (ev.code == "Space") {
+    $(document).on("keydown",    (e) => {
+        const ev = e.originalEvent
+        if (ev.code == "Space" || ev.code == "ArrowUp") {
             jumpKeyboard = true;
             updateJump();
         }
