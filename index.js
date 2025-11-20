@@ -43,7 +43,8 @@ function loop() {
     renderTick(elapsed)
     physicsTick(elapsed)
 
-    requestAnimationFrame(loop)
+    //requestAnimationFrame(loop)
+    setTimeout(loop, 10)
 }
 
 function jump(enabled) {
@@ -107,6 +108,8 @@ function physicsTick(elapsed) {
     }
 
     // Autoscroll
+    // TODO: Speed up scroll as you go up
+    //state.scrollSpeed = (0.1 / (state.character.y+1))
     state.bottom += elapsed * state.scrollSpeed
     state.bottom = Math.max(state.character.y - MAX_BOTTOM_DISTANCE, state.bottom)
 
@@ -116,7 +119,7 @@ function physicsTick(elapsed) {
         character.dead = true
     }
 
-    // TODO: Scrolling, add/remove off top/bottom of screen
+    // Add off top of screen
 
 }
 
@@ -185,7 +188,15 @@ function renderTick(elapsed) {
             })
         }
     }
-    // TODO: Remove stuff off the bottom
+    // Remove stuff off the bottom
+    for (var floorNum of Object.keys(state.floors)) {
+        if (floorNum < state.bottom-1) { // Off the bottom?
+            for (var thing of state.floors[floorNum]) {
+                if (thing.e) thing.e.remove()
+            }
+            delete state.floors[floorNum]
+        }
+    }
 
     // Render character
     if ($(".sprite.character").length == 0) {

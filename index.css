@@ -3,6 +3,9 @@
     height: calc(var(--size) * 16);
     width: calc(var(--size) * 5);
     position: relative;
+    overflow: clip;
+    margin-bottom: 10px;
+    border-bottom: 1px solid red;
 
     image-rendering: pixelated;
     --size: calc(min(80vh/16, 100vw/5)); /* 32px;*/
