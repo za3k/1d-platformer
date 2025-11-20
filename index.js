@@ -5,18 +5,7 @@ const sprites = {
 }
 
 var state = {
-    "floors": {
-        0: ["platform", "spike", "platform", "spike", "platform"],
-        1: ["empty", "empty", "empty", "empty", "empty"],
-        2: ["platform", "spike", "spike", "platform", "platform"],
-        3: ["empty", "empty", "empty", "empty", "empty"],
-        4: ["platform", "platform", "platform", "platform", "platform"],
-        5: ["empty", "empty", "empty", "empty", "empty"],
-        6: ["platform", "platform", "platform", "platform", "platform"],
-        7: ["empty", "empty", "empty", "empty", "empty"],
-        8: ["platform", "platform", "platform", "platform", "platform"],
-        9: ["empty", "empty", "empty", "empty", "empty"],
-    },
+    "floors": {},
     "character": {
         y: 1,
         x: 2,
@@ -120,6 +109,10 @@ function physicsTick(elapsed) {
     }
 
     // Add off top of screen
+    topVisible = state.bottom + 16
+    for (var floorNum of wholeNumbersBetween(state.bottom, state.bottom+16)) {
+        if (!state.floors[floorNum]) generateFloor(floorNum)
+    }
 
 }
 
@@ -217,7 +210,23 @@ function renderTick(elapsed) {
     // Fadeout of platforms toward the edges of the tower
 }
 
+function generateFloor(i) {
+    const floor = []
+
+    for (var n = 0; n<5; n++) {
+        if (i%2) { 
+            floor.push("empty")
+        } else {
+            // Generate stuff
+            floor.push("platform")
+        }
+    }
+    state.floors[i] = floor
+}
+
 function main() {
+    for (var i=0; i<16; ++i) generateFloor(i)
+
     requestAnimationFrame(loop)
 
     // Bind jump key (spacebar)
