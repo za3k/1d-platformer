@@ -67,6 +67,10 @@ const JUMP_ACC = 100
 const FALL_ACC = -JUMP_ACC * .8
 const MAX_BOTTOM_DISTANCE = 6
 function physicsTick(elapsed) {
+    if (state.character.dead) {
+        return
+    }
+
     const character = state.character
     const jumpState = state.character.jumpState
     if (jumpState.jumping) {
@@ -85,7 +89,7 @@ function physicsTick(elapsed) {
     if (thing == "spike" && dist > 0) {
         // TODO: Check for upwards spike collision. If there is one, explode the character.
         // explode()
-        character.dead = true
+        //character.dead = true
     } else if (thing == "platform" || thing == "spike") {
         // Check for downwards floor collision. If there is one, reduce distance and set "ready" on jumpState
         jumpState.ready = true
@@ -105,6 +109,12 @@ function physicsTick(elapsed) {
     // Autoscroll
     state.bottom += elapsed * state.scrollSpeed
     state.bottom = Math.max(state.character.y - MAX_BOTTOM_DISTANCE, state.bottom)
+
+    state.score = Math.max(Math.floor(state.character.y), state.score)
+
+    if (state.character.y < state.bottom) {
+        character.dead = true
+    }
 
     // TODO: Scrolling, add/remove off top/bottom of screen
 
@@ -186,6 +196,12 @@ function renderTick(elapsed) {
         "--x": 2,
         "--y": state.character.y-state.bottom,
     })
+
+    $(".score").text(state.score)
+
+    if (state.character.dead) {
+        $(".dead").show()
+    }
 
     // Fadeout of platforms toward the edges of the tower
 }

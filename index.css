@@ -51,3 +51,27 @@
 body > * {
     margin: auto;
 }
+
+.dead {
+    display: none
+}
+
+.dead {
+    display: none;
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    background: pink;
+    width: 30vw;
+    text-align: center;
+    padding: 1rem;
+    border-radius: 25px;
+    font-size: 24pt;
+    transform: translate(-15vw);
+}
+
+.top-score {
+    width: fit-content;
+    font-size: 24pt;
+    font-weight: bold;
+}
