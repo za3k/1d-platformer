@@ -17,6 +17,7 @@ var state = {
             ready: true,
         },
         dead: false,
+        width: 0.5,
     },
     "scrollSpeed": 0.1,
     "bottom": 0,
@@ -72,15 +73,25 @@ function physicsTick(elapsed) {
     }
     var thing = null
     var dist  = state.character.velocity_y * elapsed
-    const res = testCollision(state.character.y, dist)
+    const movingUp = dist > 0, movingDown = dist < 0
+    var collisionList = []
+    if (movingUp) {
+        collisionList = ["spike-down", "blocker"]
+    } else {
+        collisionList = ["platform", "spike-down", "blocker", "spike-up"]
+    }
+    const res = testCollision(state.character.y, dist, collisionList)
     thing = res[0]
     dist = res[1]
 
-    if (thing == "spike" && dist > 0) {
-        // TODO: Check for upwards spike collision. If there is one, explode the character.
+    if (thing == "spike-down" && movingUp || thing == "spike-up" && movingDown) {
+        // TODO: Check for spike collision. If there is one, explode the character.
         // explode()
         //character.dead = true
-    } else if (thing == "platform" || thing == "spike") {
+        //character.velocity_y = Math.min(0, character.velocity_y)
+    } else if (thing == "blocker" && movingUp) {
+        character.velocity_y = Math.min(0, character.velocity_y)
+    } else if (thing == "platform" || thing == "spike-down" || thing == "blocker" && movingDown) {
         // Check for downwards floor collision. If there is one, reduce distance and set "ready" on jumpState
         jumpState.ready = true
         character.velocity_y = 0
@@ -100,13 +111,13 @@ function physicsTick(elapsed) {
     // Speeds up as you go up. 7 should be the max speed
     const targets = [
         [0, 0.1],
-        [10, 1],
-        [30, 2],
-        [50, 3],
-        [100, 4],
-        [200, 5],
-        [300, 6],
-        [500, 7],
+        [100, 1],
+        [300, 2],
+        [500, 3],
+        [1000, 4],
+        [2000, 5],
+        [3000, 6],
+        [5000, 7],
         [99999999, 8],
     ]
     for (var i=0; i<targets.length-1; i++) {
@@ -161,28 +172,35 @@ function wholeNumbersBetween(x, y) {
     return res
 }
 
-function testCollision(startY, dist) {
+function testCollision(startY, dist, collisionList) {
+    var floorsToCheck = []
     if (dist > 0) {
         // Jump up
-        // Whole numbers between startY and (startY + dist)
-        for (const whole of wholeNumbersBetween(startY, startY + dist)) {
-            //const dist = whole - startY
-            // Priority list: down-spike, platform, empty
-        }
+        floorsToCheck = wholeNumbersBetween(startY, startY + dist)
     } else {
-        startY -= 1 // Character height
         // Fall down
-        // Whole numbers between (startY + dist) and startY
-        for (const whole of wholeNumbersBetween(startY + dist, startY).reverse()) {
-            const floor = getFloor(whole)
-            var x = state.character.x - floor.offset_x // Compensate for scrolling
-            x = Math.floor(x)
-            // Priority list: up-spike, platform, empty
-            var thing = floor.things[x] // TODO: Deal with straddling later
+        startY -= 1 // Character height
+        floorsToCheck = wholeNumbersBetween(startY + dist, startY).reverse()
+    }
+
+    for (const floorNum of floorsToCheck) {
+        const floor = getFloor(floorNum)
+        var xFloat = state.character.x + 0.5 - floor.offset_x // Compensate for scrolling
+        const collisions = []
+        const tiles = [
+            Math.floor(xFloat - state.character.width/2),
+            Math.floor(xFloat + state.character.width/2),
+        ]
+        for (const x of tiles) {
+            var thing = floor.things[x]
             if (!thing) continue
             if (thing.sprite) thing = thing.sprite
-            if (thing == "empty") continue
-            return [thing, whole-startY]
+            collisions.push(thing)
+        }
+        for (const concern of collisionList) {
+            if (collisions.includes(concern)) {
+                return [thing, floorNum-startY]
+            }
         }
     }
 
@@ -194,7 +212,7 @@ function getFloor(floorNum) {
     if (state.floors[floorNum]) return state.floors[floorNum]
     else {
         return {
-            things: ["empty", "empty", "empty", "empty"],
+            things: ["empty", "empty", "empty", "empty", "empty", "empty", "empty"],
             offset_x: 0,
             velocity_x: 0,
         }
@@ -263,24 +281,53 @@ function generateFloor(i) {
         velocity_x: 0,
         offset_x: 0,
     }
+    const floorUnder = getFloor(i-1)
     state.floors[i] = floor
 
-    const dirRNG = Math.random()
-    if (dirRNG > 0.3) {
-        floor.velocity_x = 0
-    } else if (dirRNG < 0.15) {
-        floor.velocity_x = 1
+    if (i%2) {
+        floor.velocity_x = floorUnder.velocity_x
+        floor.offset_x = floorUnder.offset_x
     } else {
-        floor.velocity_x = -1
+        const dirRNG = Math.random()
+        if (dirRNG > 0.3) {
+            floor.velocity_x = 0
+        } else if (dirRNG < 0.15) {
+            floor.velocity_x = 1
+        } else {
+            floor.velocity_x = -1
+        }
     }
         
 
     for (var n = 0; n<7; n++) {
-        if (i%2) { 
+        const randThing = Math.random()
+        var thingUnder = floorUnder.things[n]
+        if (thingUnder.sprite) thingUnder = thingUnder.sprite
+
+        if (floor.velocity_x == 0 && n == state.character.x) {
+            // Make the middle traversable if the floor isn't moving
+            if (i%2) floor.things.push("empty")
+            else     floor.things.push("platform")
+        } else if (i%2 && thingUnder == "empty") { 
+            // Make it empty if there's no support for a spike
             floor.things.push("empty")
+        } else if (i%2) { 
+            if (randThing > 0.75) {
+                floor.things.push("spike-up")
+            } else {
+                floor.things.push("empty")
+            }
         } else {
-            // Generate stuff
-            floor.things.push("platform")
+            // Generate stuff randomly
+            if (randThing > 0.75) {
+                floor.things.push("platform")
+            } else if (randThing > 0.6) {
+                floor.things.push("blocker")
+            } else if (randThing < 0.25) {
+                floor.things.push("empty")
+            } else {
+                floor.things.push("spike-down")
+            }
         }
     }
 }
