@@ -22,6 +22,10 @@
     background-repeat: no-repeat;
 }
 
+.sprite.character.dead {
+    transform: rotate(180deg);
+}
+
 .sprite.platform {
     background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAYElEQVR4AeyRUQ7AIAhDyy7JGTmla2XzZ8lUvjUUJDZPgxdyNZaKIEBzd1SkSwVgrYcAFhGQVjHySvSbAKwwpgHS4Z/kfdRnwP2IDmI3q7RkvC/IrpAPAJ9f2B7jGSJwAwAA///jHxP+AAAABklEQVQDADsyOiHfZ+sXAAAAAElFTkSuQmCC");
 }
@@ -55,11 +59,7 @@ body > * {
     margin: auto;
 }
 
-.dead {
-    display: none
-}
-
-.dead {
+.dead-modal {
     display: none;
     position: fixed;
     left: 50%;

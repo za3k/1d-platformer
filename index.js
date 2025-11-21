@@ -7,7 +7,7 @@ const sprites = {
 var state = {
     "floors": {},
     "character": {
-        y: 1,
+        y: 3,
         x: 2,
         velocity_y: 0,
         jumpState: {
@@ -98,7 +98,26 @@ function physicsTick(elapsed) {
 
     // Autoscroll
     // TODO: Speed up scroll as you go up
-    //state.scrollSpeed = (0.1 / (state.character.y+1))
+    // Let's say... 7 should be the max speed
+    // 
+    const targets = [
+        [0, 0.1],
+        [10, 1],
+        [30, 2],
+        [50, 3],
+        [100, 4],
+        [200, 5],
+        [300, 6],
+        [500, 7],
+        [99999999, 8],
+    ]
+    for (var i=0; i<targets.length-1; i++) {
+        const fraction = (state.character.y - targets[i][0]) / (targets[i+1][0]-targets[i][0])
+        if (fraction < 0 || fraction > 1) continue
+        const min = targets[i][1]
+        const max = targets[i+1][1]
+        state.scrollSpeed = min + (max-min)*fraction
+    }
     state.bottom += elapsed * state.scrollSpeed
     state.bottom = Math.max(state.character.y - MAX_BOTTOM_DISTANCE, state.bottom)
 
@@ -204,7 +223,8 @@ function renderTick(elapsed) {
     $(".score").text(state.score)
 
     if (state.character.dead) {
-        $(".dead").show()
+        $(".dead-modal").show()
+        $(".character").addClass("dead")
     }
 
     // Fadeout of platforms toward the edges of the tower
