@@ -16,7 +16,7 @@
     height: var(--size);
     /*border: 1px solid black;*/
     position: absolute;
-    left: calc(var(--x) * var(--size));
+    left: calc( ( var(--x) - 1 ) * var(--size));
     bottom: calc(var(--y) * var(--size));
     background-size: contain;
     background-repeat: no-repeat;

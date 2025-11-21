@@ -8,7 +8,7 @@ var state = {
     "floors": {},
     "character": {
         y: 3,
-        x: 2,
+        x: 3,
         velocity_y: 0,
         jumpState: {
             jumping: false,
@@ -129,6 +129,19 @@ function physicsTick(elapsed) {
     for (var floorNum of Object.keys(state.floors)) {
         const floor = state.floors[floorNum]
         floor.offset_x += floor.velocity_x * elapsed
+
+        while (floor.offset_x >= 1) {
+            floor.offset_x -= 1
+            // Move the rightmost thing to the left
+            const removed = floor.things.splice(floor.things.length-1, 1)
+            floor.things.splice(0, 0, ...removed)
+        }
+        while (floor.offset_x <= -1) {
+            floor.offset_x += 1
+            // Move the leftmost thing to the right
+            const removed = floor.things.splice(0, 1)
+            floor.things.splice(floor.things.length, 0, ...removed)
+        }
     }
 
 
@@ -230,7 +243,7 @@ function renderTick(elapsed) {
     }
     const character = $(".sprite.character")
     character.css({
-        "--x": 2,
+        "--x": state.character.x,
         "--y": state.character.y-state.bottom,
     })
 
@@ -262,7 +275,7 @@ function generateFloor(i) {
     }
         
 
-    for (var n = 0; n<5; n++) {
+    for (var n = 0; n<7; n++) {
         if (i%2) { 
             floor.things.push("empty")
         } else {
