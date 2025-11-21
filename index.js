@@ -97,9 +97,7 @@ function physicsTick(elapsed) {
     }
 
     // Autoscroll
-    // TODO: Speed up scroll as you go up
-    // Let's say... 7 should be the max speed
-    // 
+    // Speeds up as you go up. 7 should be the max speed
     const targets = [
         [0, 0.1],
         [10, 1],
@@ -149,6 +147,7 @@ function testCollision(startY, dist) {
         // Whole numbers between startY and (startY + dist)
         for (const whole of wholeNumbersBetween(startY, startY + dist)) {
             //const dist = whole - startY
+            // Priority list: down-spike, platform, empty
         }
     } else {
         startY -= 1 // Character height
@@ -156,7 +155,8 @@ function testCollision(startY, dist) {
         // Whole numbers between (startY + dist) and startY
         for (const whole of wholeNumbersBetween(startY + dist, startY).reverse()) {
             const floor = getFloor(whole)
-            var thing = floor[state.character.x] // TODO: Deal with straddling later
+            // Priority list: up-spike, platform, empty
+            var thing = floor.things[state.character.x] // TODO: Deal with straddling later
             if (thing.sprite) thing = thing.sprite
             if (thing == "empty") continue
             return [thing, whole-startY]
@@ -170,7 +170,11 @@ function testCollision(startY, dist) {
 function getFloor(floorNum) {
     if (state.floors[floorNum]) return state.floors[floorNum]
     else {
-        return ["empty", "empty", "empty", "empty"]
+        return {
+            things: ["empty", "empty", "empty", "empty"],
+            offset_x: 0,
+            velocity_x: 0,
+        }
     }
 }
 
@@ -180,14 +184,14 @@ function renderTick(elapsed) {
     for (var floorOffset=0; floorOffset<16; ++floorOffset) {
         const floorNum = bottomFloor + floorOffset
         const floor = getFloor(floorNum)
-        for (var i=0; i<floor.length; i++) {
-            var thing = floor[i]
+        for (var i=0; i<floor.things.length; i++) {
+            var thing = floor.things[i]
             if (typeof(thing) == 'string') {
                 thing = {
                     sprite: thing,
                     e: $(`<div class="sprite ${thing}"></div>`),
                 }
-                floor[i] = thing
+                floor.things[i] = thing
                 $(".playarea").append(thing.e)
             }
             const pos = {
@@ -203,7 +207,7 @@ function renderTick(elapsed) {
     // Remove stuff off the bottom
     for (var floorNum of Object.keys(state.floors)) {
         if (floorNum < state.bottom-1) { // Off the bottom?
-            for (var thing of state.floors[floorNum]) {
+            for (var thing of state.floors[floorNum].things) {
                 if (thing.e) thing.e.remove()
             }
             delete state.floors[floorNum]
@@ -231,17 +235,21 @@ function renderTick(elapsed) {
 }
 
 function generateFloor(i) {
-    const floor = []
+    const floor = {
+        things: [],
+        velocity_x: 0,
+        offset_x: 0,
+    }
+    state.floors[i] = floor
 
     for (var n = 0; n<5; n++) {
         if (i%2) { 
-            floor.push("empty")
+            floor.things.push("empty")
         } else {
             // Generate stuff
-            floor.push("platform")
+            floor.things.push("platform")
         }
     }
-    state.floors[i] = floor
 }
 
 function main() {
