@@ -96,7 +96,7 @@ function physicsTick(elapsed) {
         jumpState.jumping = false
     }
 
-    // Autoscroll
+    // Autoscroll (screen)
     // Speeds up as you go up. 7 should be the max speed
     const targets = [
         [0, 0.1],
@@ -124,6 +124,13 @@ function physicsTick(elapsed) {
     if (state.character.y < state.bottom) {
         character.dead = true
     }
+
+    // Conveyoring (floors)
+    for (var floorNum of Object.keys(state.floors)) {
+        const floor = state.floors[floorNum]
+        floor.offset_x += floor.velocity_x * elapsed
+    }
+
 
     // Add off top of screen
     topVisible = state.bottom + 16
@@ -155,8 +162,11 @@ function testCollision(startY, dist) {
         // Whole numbers between (startY + dist) and startY
         for (const whole of wholeNumbersBetween(startY + dist, startY).reverse()) {
             const floor = getFloor(whole)
+            var x = state.character.x - floor.offset_x // Compensate for scrolling
+            x = Math.floor(x)
             // Priority list: up-spike, platform, empty
-            var thing = floor.things[state.character.x] // TODO: Deal with straddling later
+            var thing = floor.things[x] // TODO: Deal with straddling later
+            if (!thing) continue
             if (thing.sprite) thing = thing.sprite
             if (thing == "empty") continue
             return [thing, whole-startY]
@@ -195,7 +205,7 @@ function renderTick(elapsed) {
                 $(".playarea").append(thing.e)
             }
             const pos = {
-                x: i,
+                x: i + floor.offset_x,
                 y: floorNum-state.bottom,
             }
             thing.e.css({
@@ -241,6 +251,16 @@ function generateFloor(i) {
         offset_x: 0,
     }
     state.floors[i] = floor
+
+    const dirRNG = Math.random()
+    if (dirRNG > 0.3) {
+        floor.velocity_x = 0
+    } else if (dirRNG < 0.15) {
+        floor.velocity_x = 1
+    } else {
+        floor.velocity_x = -1
+    }
+        
 
     for (var n = 0; n<5; n++) {
         if (i%2) { 
